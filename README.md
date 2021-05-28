@@ -13,4 +13,7 @@ solrshark is a application for working with huge packet captures. It works like 
 * Export your captures and upload them into the solr backend. You can do that yourself manually, or use the `/bin/solr_uploader.rb` script.
 * You can now explore your captures in the Web UI.
 
+Since solrshark is a free project that depends on other components, you will have to install your capturing engine and Solr on your own.
+
+
 TODO: Finish README
