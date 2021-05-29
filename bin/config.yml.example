@@ -1,0 +1,23 @@
+---
+# Welcome to the SolrShark Uploader configuration file.
+# To run this script, simply define these settings.
+
+# Where can SolrShark find its collection / core?
+# Make sure the core already exists and is available under this URL.
+# Example: http://localhost:8983/solr/solrshark/
+:solrcore: http://localhost:8983/solr/solrshark/
+
+# Should this script delete the old, merged capture files?
+# Defaults to false.
+:delete_captures: false
+
+# Are the wireshark executables available from PATH?
+:wshark_in_path: true
+
+# Only if wshark_in_path is false:
+# Where can we find the wireshark executables?
+:wshark_location: "/path/to/wireshark/bin"
+
+
+# You're good to go!
+# Lastly, copy this file to config.yml so that the uploader can find it.
