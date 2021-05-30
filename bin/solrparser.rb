@@ -51,9 +51,20 @@ class SolrParser < Nokogiri::XML::SAX::Document
             # Packet closed.
             @nodes << @node
             @node = nil
+            propose_push_to_solr
         when 0
             # PDML closed.
             # Finalize process.
+            push_to_solr
         end
+    end
+
+    def push_to_solr
+        # Upload all indexed nodes to solr.
+        # Then clear @nodes.
+    end
+
+    def propose_push_to_solr
+        # Check config and figure out if we want to push to solr.
     end
 end
