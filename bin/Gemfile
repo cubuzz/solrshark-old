@@ -9,5 +9,3 @@ gem "rsolr", "~> 2.3"
 gem "nokogiri", "~> 1.11"
 
 gem "pry", "~> 0.14.1"
-
-gem "rest-client", "~> 2.1"

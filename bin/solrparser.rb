@@ -2,20 +2,25 @@ require 'rubygems'
 require 'bundler/setup'
 
 require 'nokogiri'
+require 'solr'
 
 ##
 # SolrParser
 # A custom SAX parser that is optimized for indexing PDML files.
 #
 class SolrParser < Nokogiri::XML::SAX::Document
+    attr_accessor :cfg
     attr_reader :nodes
 
     # We need to push to Solr during the indexing because
     # yes, this process does consume RAM. And a lot of RAM.
     # Why do you think we're building a SAX parser in the first place?
-    def initialize(cfg = {})
+    def initialize(cfg = { solr: {} })
         super()
         @cfg = cfg
+        @solr = RSolr.connect(
+            @cfg[:solr]
+        )
         @nodes = []
         @node = nil
         @path = []
@@ -37,6 +42,8 @@ class SolrParser < Nokogiri::XML::SAX::Document
             @node = {}
         else
             # What's in the box?
+
+            # TODO: Deduplication checks
             @node[attributes.delete('name')] = attributes
         end
 
@@ -45,7 +52,6 @@ class SolrParser < Nokogiri::XML::SAX::Document
 
     def end_element(_node_name)
         @path.pop
-        # puts "-#{@path}"
         case @path.length
         when 1
             # Packet closed.
@@ -55,16 +61,20 @@ class SolrParser < Nokogiri::XML::SAX::Document
         when 0
             # PDML closed.
             # Finalize process.
-            push_to_solr
+            push_to_solr unless @nodes.length.zero?
         end
     end
 
     def push_to_solr
         # Upload all indexed nodes to solr.
         # Then clear @nodes.
+        @solr.add @nodes
+        @nodes = []
     end
 
     def propose_push_to_solr
         # Check config and figure out if we want to push to solr.
+        return unless (@nodes.length % @cfg[:push_every]).zero?
+        push_to_solr
     end
 end
