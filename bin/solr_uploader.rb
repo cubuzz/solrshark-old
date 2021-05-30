@@ -14,7 +14,7 @@ unless File.exist?('config.yml')
             delete_captures: false,
             # TODO: Respect these two
             wshark_in_path: true,
-            wshark_location: '/path/to/wireshark/bin'
+            wshark_location: 'C:/Program Files/Wireshark'
         }
         File.open('config.yml', 'w') do |f|
             f.puts YAML.dump cfg
@@ -25,7 +25,7 @@ unless File.exist?('config.yml')
     end
 end
 
-cfg = YAML.parse File.read('config.yml')
+cfg = YAML.load File.read('config.yml')
 
 abort 'Please provide a path for files to index!' if ARGV[0].nil?
 
@@ -54,7 +54,7 @@ abort 'Empty directory passed' if files.length.zero?
 print "Warning: You're about to index #{files.length} files. This process will take a while and consume a lot of hard " \
     'drive space, as files will be converted from the wireshark format into search engine compatible index files. '\
     'Expect an increase of up to 10x times original size. Proceed? (y/N) '
-abort 'Process cancelled.' unless STDIN.gets.chomp.downcase == 'y'
+#abort 'Process cancelled.' unless STDIN.gets.chomp.downcase == 'y'
 
 file = 'solrcap.pcapng'
 if files.length > 1
@@ -62,7 +62,7 @@ if files.length > 1
     if File.exist?('solrcap.pcapng')
         abort 'File solrcap.pcapng already exists! Please rename or delete before proceeding.'
     end
-    mergecap_command = 'mergecap -w solrcap.pcapng'
+    mergecap_command = "\"#{cfg[:wshark_in_path] ? 'mergecap' : "#{cfg[:wshark_location]}/mergecap"}\" -w solrcap.pcapng"
     files.each do |f|
         mergecap_command << " #{f}"
     end
@@ -83,9 +83,9 @@ elsif files.length == 1
 else
     raise 'We hit an edge-case we were not supposed to hit... How?!'
 end
-
+puts cfg.inspect
 # Open stream to tshark
-stream = IO.popen("tshark -r #{file} -T pdml")
+stream = IO.popen("\"#{cfg[:wshark_in_path] ? 'tshark' : cfg[:wshark_location] + '/tshark'}\" -r #{file} -T pdml")
 
 # Stream data to Solr.
 require 'nokogiri'
