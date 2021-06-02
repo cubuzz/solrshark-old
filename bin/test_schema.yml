@@ -1,0 +1,18 @@
+﻿---
+- packet_1:
+    # Len, Caplen: Hexadezimal von WShark, konvertiere in Int ( #to_i(16) )
+    len: '127',
+    caplen: '127',
+    # Unix Epoch Timestamp??? Egal, lass einfach so.
+    captime: '1621852048.210350000',
+    # Flags are used in the UI. By default, set every packet flag to 1 (displayed).
+    flag: '1', 
+    ip_header: '45', # IPv4 x 5 Byte Header
+    contlen: '0123', # Content length, Hexadezimal
+    proto: 'udp', # Protocol
+    ip_src: '0a000002', # Lass in Hexa. Macht Frontend.
+    ip_dst: '0a0000ff', # Lass in Hexa. Macht Frontend.
+    src_port: 'd683', # Hexa zu Int
+    dst_port: 'd683', # Hexa zu Int
+    data_len: '263', # Ist bereits Int von Wshark aus (idfk)
+    data: '01234fadb (...)', # Data, string.

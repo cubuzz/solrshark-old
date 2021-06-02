@@ -2,7 +2,7 @@ require 'rubygems'
 require 'bundler/setup'
 
 require 'nokogiri'
-require 'solr'
+require 'rsolr'
 
 ##
 # SolrParser
@@ -15,12 +15,17 @@ class SolrParser < Nokogiri::XML::SAX::Document
     # We need to push to Solr during the indexing because
     # yes, this process does consume RAM. And a lot of RAM.
     # Why do you think we're building a SAX parser in the first place?
-    def initialize(cfg = { solr: {} })
+    def initialize(cfg)
+        raise 'You did not pass a valid configuration :(' if cfg.nil? ||
+                                                             cfg.empty? ||
+                                                             cfg[:solr].nil? ||
+                                                             cfg[:solr].empty?
+
         super()
         @cfg = cfg
         @solr = RSolr.connect(
             @cfg[:solr]
-        )
+        ) unless @cfg[:dry_run]
         @nodes = []
         @node = nil
         @path = []
@@ -43,7 +48,20 @@ class SolrParser < Nokogiri::XML::SAX::Document
         else
             # What's in the box?
 
-            # TODO: Deduplication checks
+            # TODO: Regenerator stuff
+            # If wireshark is supposed to hide this field.
+            # In our case, we always want to store it anyway.
+            attributes.delete('hide')
+            # What value is wireshark supposed to show?
+            # Doesn't matter, we can figure it out anyway.
+            attributes.delete('show')
+
+            # TODO: Uncomment when fully implemented.
+            # This field only stores a full-text, human readable
+            # version of the data. Not required when we store everything.
+            # attributes.delete('showname')
+
+            # Push to node
             @node[attributes.delete('name')] = attributes
         end
 
@@ -68,13 +86,16 @@ class SolrParser < Nokogiri::XML::SAX::Document
     def push_to_solr
         # Upload all indexed nodes to solr.
         # Then clear @nodes.
+        return if @cfg[:dry_run]
         @solr.add @nodes
         @nodes = []
     end
 
     def propose_push_to_solr
         # Check config and figure out if we want to push to solr.
+        return if @cfg[:dry_run]
         return unless (@nodes.length % @cfg[:push_every]).zero?
+
         push_to_solr
     end
 end

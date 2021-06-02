@@ -12,9 +12,8 @@ unless File.exist?('config.yml')
         cfg = {
             solrcore: 'http://localhost:8983/solr/solrshark/',
             delete_captures: false,
-            # TODO: Respect these two
             wshark_in_path: true,
-            wshark_location: 'C:/Program Files/Wireshark'
+            wshark_location: '/path/to/wireshark'
         }
         File.open('config.yml', 'w') do |f|
             f.puts YAML.dump cfg
@@ -54,7 +53,7 @@ abort 'Empty directory passed' if files.length.zero?
 print "Warning: You're about to index #{files.length} files. This process will take a while and consume a lot of hard " \
     'drive space, as files will be converted from the wireshark format into search engine compatible index files. '\
     'Expect an increase of up to 10x times original size. Proceed? (y/N) '
-#abort 'Process cancelled.' unless STDIN.gets.chomp.downcase == 'y'
+abort 'Process cancelled.' unless STDIN.gets.chomp.downcase == 'y'
 
 file = 'solrcap.pcapng'
 if files.length > 1
@@ -83,14 +82,14 @@ elsif files.length == 1
 else
     raise 'We hit an edge-case we were not supposed to hit... How?!'
 end
-puts cfg.inspect
+# puts cfg.inspect
 # Open stream to tshark
-stream = IO.popen("\"#{cfg[:wshark_in_path] ? 'tshark' : cfg[:wshark_location] + '/tshark'}\" -r #{file} -T pdml")
+stream = IO.popen("\"#{cfg[:wshark_in_path] ? 'tshark' : "#{cfg[:wshark_location]}/tshark"}\" -r #{file} -T pdml")
 
 # Stream data to Solr.
 require 'nokogiri'
 require './solrparser'
-parser = Nokogiri::XML::SAX::Parser.new(SolrParser.new)
+parser = Nokogiri::XML::SAX::Parser.new(SolrParser.new({ solr: { url: cfg[:solrcore] } }))
 
 # Debugger
 require 'pry'
