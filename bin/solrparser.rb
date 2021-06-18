@@ -8,6 +8,7 @@ require 'rsolr'
 # SolrParser
 # A custom SAX parser that is optimized for indexing PDML files.
 #
+
 class SolrParser < Nokogiri::XML::SAX::Document
     attr_accessor :cfg
     attr_reader :nodes
@@ -23,9 +24,11 @@ class SolrParser < Nokogiri::XML::SAX::Document
 
         super()
         @cfg = cfg
-        @solr = RSolr.connect(
-            @cfg[:solr]
-        ) unless @cfg[:dry_run]
+        unless @cfg[:dry_run]
+            @solr = RSolr.connect(
+                @cfg[:solr]
+            )
+        end
         @nodes = []
         @node = nil
         @path = []
@@ -72,8 +75,37 @@ class SolrParser < Nokogiri::XML::SAX::Document
         @path.pop
         case @path.length
         when 1
+            temp_node = {}
+
+            proto_list = {
+                '01': 'icmp',
+                '06': 'tcp',
+                '11': 'udp'
+            }
+            proto = proto_list[:"#{@node['ip.proto']['value']}"]
+
+            if %w[tcp udp].include? proto
+                temp_node[:len] = @node['len']['value'].to_i(16)
+                temp_node[:caplen] = @node['caplen']['value'].to_i(16)
+                temp_node[:captime] = @node['timestamp']['value']
+                temp_node[:flag] = 1
+                temp_node[:ip_header] = @node['ip.hdr_len']['value'].to_i(16)
+                temp_node[:contlen] = @node['data.data']['size'].to_i(16)
+                temp_node[:proto] = proto
+                temp_node[:ip_src] = @node['ip.src']['value']
+                temp_node[:ip_dst] = @node['ip.dst']['value']
+                temp_node[:src_port] = @node["#{proto}.srcport"]['value'].to_i(16)
+                temp_node[:dst_port] = @node["#{proto}.dstport"]['value'].to_i(16)
+                temp_node[:data_len] = @node['geninfo']['size'].to_i(16)
+                temp_node[:data] = @node['data.data']['value']
+                elif proto == 'icmp'
+                temp_node[:ip_src] = @node['ip.src']['value']
+                temp_node[:ip_dst] = @node['ip.dst']['value']
+                temp_node[:src_port] = @node["#{proto}.srcport"]['value'].to_i(16)
+                temp_node[:dst_port] = @node["#{proto}.dstport"]['value'].to_i(16)
+            end
             # Packet closed.
-            @nodes << @node
+            @nodes << temp_node
             @node = nil
             propose_push_to_solr
         when 0
@@ -87,6 +119,7 @@ class SolrParser < Nokogiri::XML::SAX::Document
         # Upload all indexed nodes to solr.
         # Then clear @nodes.
         return if @cfg[:dry_run]
+
         @solr.add @nodes
         @nodes = []
     end

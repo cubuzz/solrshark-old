@@ -8,6 +8,7 @@ parser = Nokogiri::XML::SAX::Parser.new(SolrParser.new({
     dry_run: true
     })
 )
+require 'pry'
 stream = File.open('test.pdml', 'r')
 
 parser.parse stream
