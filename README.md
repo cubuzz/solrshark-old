@@ -16,4 +16,5 @@ solrshark is a application for working with huge packet captures. It works like 
 Since solrshark is a free project that depends on other components, you will have to install your capturing engine and Solr on your own.
 
 
-TODO: Finish README
+# Update (Sept. 2021)
+I have decided that the way I approached this project was wrong and will therefore rework the entire code base. Please visit [the new repo](https://github.com/cubuzz/solrshark) if you're interested. Changes made will include a native flutter desktop client, a better storage format and more. Thank you for your patience, I'm certain it'll be worth the wait!
